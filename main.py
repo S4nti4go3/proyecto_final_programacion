@@ -5,57 +5,69 @@ import network
 import random
 
 # ============================
-# CONFIGURACIÓN WOKWI + API
+# CONFIGURACIÓN
 # ============================
 
 WIFI_SSID = "Wokwi-GUEST"
 WIFI_PASS = ""
 
-# ⚠️ CAMBIAR ESTA URL CUANDO DESPLIEGUES EL BACKEND EN RENDER
-SERVER_URL = "https://proyecto-final-programacion-i5d4.onrender.com/"
+SERVER_URL = "https://pa-proyecto-final-dia.onrender.com/receive_sensor_data/"
 
+# ============================
+# CONEXIÓN WIFI
+# ============================
 
 def connect_wifi():
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
 
-    if not wlan.isconnected():
-        print("Conectando al WiFi...")
-        wlan.connect(WIFI_SSID, WIFI_PASS)
+    print("Conectando al WiFi...")
+    wlan.connect(WIFI_SSID, WIFI_PASS)
 
-        timeout = 10
-        while not wlan.isconnected() and timeout > 0:
-            print(".", end="")
-            time.sleep(1)
-            timeout -= 1
+    timeout = 10
+    while not wlan.isconnected() and timeout > 0:
+        print(".", end="")
+        time.sleep(1)
+        timeout -= 1
 
-        if not wlan.isconnected():
-            print("\n❌ No se pudo conectar al WiFi")
-            return None
+    if wlan.isconnected():
+        print("\n✅ WiFi conectado")
+        print("IP:", wlan.ifconfig()[0])
+        return wlan
+    else:
+        print("\n❌ Error de conexión WiFi")
+        return None
 
-    print("\n✅ WiFi conectado:", wlan.ifconfig())
-    return wlan
+# ============================
+# SIMULACIÓN DE SENSORES
+# ============================
 
-
-def simulate_sensor(sensor_type):
+def read_simulated_data(sensor_type):
     if sensor_type == "Temperature":
-        return round(random.uniform(20.0, 36.0), 1), "C"
-    if sensor_type == "Humidity":
-        return round(random.uniform(40.0, 70.0), 1), "%"
-
+        value = random.uniform(20.0, 36.0)
+        return round(value, 1), "C"
+    elif sensor_type == "Humidity":
+        value = random.uniform(40.0, 71.0)
+        return round(value, 1), "%"
     return None, None
 
+# ============================
+# ENVÍO DE DATOS
+# ============================
 
 def send_data(sensor_type):
-    value, unit = simulate_sensor(sensor_type)
-
+    value, unit = read_simulated_data(sensor_type)
+    if value is None:
+        print("❌ Tipo de sensor no válido")
+        return
+    
     payload = {
         "sensor_type": sensor_type,
         "value": value,
         "unit": unit
     }
 
-    print("\n📤 Enviando ->", payload)
+    print("\n📤 Enviando:", payload)
 
     try:
         response = urequests.post(
@@ -64,22 +76,25 @@ def send_data(sensor_type):
             headers={"Content-Type": "application/json"}
         )
 
-        print("➡️ Código HTTP:", response.status_code)
+        print("➡️ HTTP:", response.status_code)
         print("➡️ Respuesta:", response.text)
         response.close()
 
     except Exception as e:
-        print("❌ Error enviando:", e)
+        print("❌ Error al enviar:", e)
 
+# ============================
+# LOOP PRINCIPAL
+# ============================
 
 def main():
     if connect_wifi():
         while True:
             send_data("Temperature")
             time.sleep(2)
-            send_data("Humidity")
 
-            print("⏳ Esperando 15s...\n")
+            send_data("Humidity")
+            print("⌛ Esperando 15s...\n")
             time.sleep(15)
 
 
