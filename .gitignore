@@ -1,0 +1,62 @@
+# ============================
+# PYTHON
+# ============================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.pyw
+*.so
+
+# Entornos virtuales
+.venv/
+venv/
+ENV/
+env/
+
+# Archivos de configuración locales
+*.env
+.env.*
+!.env.example
+
+# ============================
+# FASTAPI / UVICORN
+# ============================
+# Logs
+*.log
+logs/
+uvicorn.log
+
+# Compilados / cache
+.cache/
+*.sqlite3
+
+# ============================
+# EDITOR / IDE
+# ============================
+# VSCode
+.vscode/
+.code/
+.code-workspace
+
+# JetBrains
+.idea/
+*.iml
+
+# ============================
+# SISTEMA OPERATIVO
+# ============================
+# Windows
+Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+# ============================
