@@ -83,11 +83,32 @@ def agregar_dato_prueba():
         return jsonify({"error": f"No se pudo insertar: {e}"}), 500
 
 
-@app.route('/receive_sensor_data', methods=['POST'])
+# ====================================================
+# RUTA GET + POST PARA VER Y RECIBIR DATOS DE SENSORES
+# ====================================================
+@app.route('/receive_sensor_data', methods=['GET', 'POST'])
 def receive_sensor_data():
-    """
-    Recibe datos reales enviados por el ESP32 / Wokwi
-    """
+    
+    # ======= GET PARA MOSTRAR DATOS EN EL NAVEGADOR =======
+    if request.method == 'GET':
+        if sensor_collection is None:
+            return jsonify({"error": "No hay conexión con MongoDB"}), 503
+        
+        # obtener los últimos 20 documentos
+        datos = list(sensor_collection.find().sort("_id", -1).limit(20))
+
+        # convertir ObjectId a string
+        for d in datos:
+            d["_id"] = str(d["_id"])
+        
+        return jsonify({
+            "status": "success",
+            "total": len(datos),
+            "data": datos
+        }), 200
+
+
+    # ======= POST PARA RECIBIR DATOS DEL ESP32 =======
     if sensor_collection is None:
         return jsonify({"error": "No hay conexión con MongoDB"}), 503
 
@@ -123,5 +144,3 @@ def receive_sensor_data():
     except Exception as e:
         print(f"Error en receive_sensor_data: {e}")
         return jsonify({"status": "error", "message": f"Error interno: {e}"}), 500
-
-
