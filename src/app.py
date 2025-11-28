@@ -86,27 +86,41 @@ def agregar_dato_prueba():
 # ====================================================
 # RUTA GET + POST PARA VER Y RECIBIR DATOS DE SENSORES
 # ====================================================
-@app.route('/receive_sensor_data', methods=['GET', 'POST'])
-def receive_sensor_data():
-    
-    # ======= GET PARA MOSTRAR DATOS EN EL NAVEGADOR =======
-    if request.method == 'GET':
-        if sensor_collection is None:
-            return jsonify({"error": "No hay conexión con MongoDB"}), 503
-        
-        # obtener los últimos 20 documentos
-        datos = list(sensor_collection.find().sort("_id", -1).limit(20))
+def send_sound_data():
+    digital, analog = read_sound_sensor()
 
-        # convertir ObjectId a string
-        for d in datos:
-            d["_id"] = str(d["_id"])
-        
-        return jsonify({
-            "status": "success",
-            "total": len(datos),
-            "data": datos
-        }), 200
+    payload = {
+        "sensor_type": "SoundSensor",
+        "value": {
+            "digital": digital,
+            "analog": analog,
+            "unit": "-"
+        }
+    }
 
+    json_payload = ujson.dumps(payload)
+
+    print("\n--- Enviando Datos ---")
+    print("JSON:", json_payload)
+
+    try:
+        headers = {'Content-Type': 'application/json'}
+        response = urequests.post(
+            SERVER_URL,
+            data=json_payload,
+            headers=headers
+        )
+
+        if response.status_code == 201:
+            print("✔ ÉXITO 201: Datos guardados en MongoDB")
+        else:
+            print("❌ Error HTTP:", response.status_code)
+            print("Respuesta:", response.text)
+
+        response.close()
+
+    except Exception as e:
+        print("❌ ERROR al enviar:", e)
 
     # ======= POST PARA RECIBIR DATOS DEL ESP32 =======
     if sensor_collection is None:
