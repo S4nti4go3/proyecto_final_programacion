@@ -125,6 +125,26 @@ def receive_sensor_data():
         if sensor_type is None or value is None:
             return jsonify({"error": "Faltan campos obligatorios: sensor_type o value"}), 400
 
+        # =========================================
+        # 🔧 VALIDACIÓN Y SANITIZACIÓN DE "value"
+        # =========================================
+        if isinstance(value, dict):
+            # Caso: el ESP32 envía algo como {"raw": 123}
+            if "raw" in value:
+                value = value["raw"]
+            else:
+                return jsonify({
+                    "error": "El campo 'value' no puede ser un objeto. Debe ser numérico o string."
+                }), 400
+
+        # Convertir string numérico a float si aplica
+        try:
+            if isinstance(value, str) and value.replace('.', '', 1).isdigit():
+                value = float(value)
+        except:
+            pass
+        # =========================================
+
         doc = {
             "sensor": sensor_type,
             "valor": value,
@@ -144,3 +164,10 @@ def receive_sensor_data():
     except Exception as e:
         print(f"Error en receive_sensor_data: {e}")
         return jsonify({"status": "error", "message": f"Error interno: {e}"}), 500
+
+
+# ============================
+# MAIN
+# ============================
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
